@@ -1,0 +1,21 @@
+{
+  "name": "graphql-with-apollo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "author": "MallamTY",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^4.7.0",
+    "apollo-server": "^3.12.0",
+    "dotenv": "^16.0.3",
+    "graphql": "^16.6.0",
+    "mongoose": "^7.0.4",
+    "nodemon": "^2.0.22"
+  }
+}
