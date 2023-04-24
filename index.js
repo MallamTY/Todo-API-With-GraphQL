@@ -2,23 +2,47 @@ import { ApolloServer } from 'apollo-server';
 import typeDefs from "./graphql/type.definition.js";
 import resolvers from "./graphql/resolver.js";
 import connectDB from "./db/db.connet.js";
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { applyMiddleware } from 'graphql-middleware';
 import { MONGO_URI, PORT } from "./configuration.js";
+import permissions from './graphql/permission.js';
+import todoModel from './model/todo.js';
+import { tokenVerifier } from './assessories/token.verifier.js';
 
-// A schema is a collection of type definitions (hence "typeDefs")
-// that together define the "shape" of queries that are executed against
-// your data.
-const server = new ApolloServer({
+
+
+
+const schema = makeExecutableSchema({
     typeDefs,
     resolvers
+})
+
+const schema_with_permission = applyMiddleware(schema, permissions);
+
+const server = new ApolloServer({
+    schema: schema_with_permission,
+    context: ({ req }) => {
+        const user = req.headers.authorization;
+        const Todo = todoModel;
+        let currentUser = ''
+        if (user) {
+            let token = user.split(' ')[1];
+            const payload = tokenVerifier(token);
+            currentUser = payload;
+        }
+       
+        return { user, Todo, currentUser};
+      },
+      
 })
 
 
 const startUp = async () => {
 
     await connectDB(MONGO_URI);
-    const {url} = await server.listen({port: 7000})
+    const {url} = await server.listen({port: PORT})
 
-    console.log(`\n ${url}`);
+    console.log(`\n Server running on ${url}`);
 }
 
 startUp();
