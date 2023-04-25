@@ -24,14 +24,14 @@ const server = new ApolloServer({
     context: ({ req }) => {
         const user = req.headers.authorization;
         const Todo = todoModel;
-        let currentUser = ''
+        let current_user = ''
         if (user) {
             let token = user.split(' ')[1];
             const payload = tokenVerifier(token);
-            currentUser = payload;
+            current_user = payload;
         }
        
-        return { user, Todo, currentUser};
+        return { user, Todo, current_user};
       },
       
 })

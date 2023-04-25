@@ -9,34 +9,50 @@ import { tokenIssuer } from "../assessories/token.issuer.js";
 
 const resolvers = {
     Query: {
-        async getSingleTask (_, {id}) {
+        async getSingleTask (_, {id}, {current_user}, info) {
             
-            const task = await todoModel.findById(id);
+            const task = await todoModel.findOne({$and: [{_id: id}, {user_id: current_user.id}]});
             
-            return {
-                id: task.id,
-                ...task._doc
+            if (task) {
+                return {
+                    id: task.id,
+                    ...task._doc
+                }
             }
+
+            return new ApolloError('Error getting task', 417);
+           
             
         },
 
-        async getTaskByAmount (_, {amount}) {
-            const tasks = await todoModel.find().sort({createdAt: 1}).limit(amount);
-            return tasks;
+        async getTaskByAmount (_, {amount}, {current_user}, info) {
+        
+            const tasks = await todoModel.find({user_id: current_user.id}).sort({createdAt: 1}).limit(amount);
+
+            if (tasks) {
+                return tasks;
+            }
+
+            return new ApolloError('Error getting tasks', 417);
         },
 
-        getAllTasks: async(parent, args, context, info) => {
+        getAllTasks: async(parent, args, {current_user}, info) => {
+            
+            const tasks = await todoModel.find({user_id: current_user.id});
 
-                const tasks = await todoModel.find()
+            if (tasks) {
+                return tasks;
+            }
 
-            return tasks;
+            return new ApolloError('Error getting tasks', 417);
         
         }
     },
 
     Mutation: {
-        async createTask (_, {taskInput: {task_title, status, description}}) {
-            const created_task = await todoModel.create({task_title, status, description});
+        async createTask (_, {taskInput: {task_title, status, description}}, {current_user}, info) {
+
+            const created_task = await todoModel.create({task_title, user_id: current_user.id, status, description});
 
             return {
                 id: created_task.id,
@@ -44,22 +60,31 @@ const resolvers = {
             }
         },
         
-       async updateTask (_, {id, editeTaskInput: {task_title, status, description}}) {
-            const updated_task = (await todoModel.updateOne({_id: id}, {task_title, status, description})).modifiedCount;
+       async updateTask (_, {id, editeTaskInput: {task_title, status, description}}, {current_user}) {
 
-            return updated_task
+
+            const updated_task = (await todoModel.updateOne({$and: [{_id: id}, {user_id: current_user.id}]}, {task_title, status, description})).modifiedCount;
+
+            if (updated_task) {
+                return `Task updated successfully`
+            }
+
+            return new ApolloError('Error updating this task')
         },
 
-        async deleteTask (_, {id}) {
-            const deleted_task = (await todoModel.deleteOne({_id: id})).deletedCount;
+        async deleteTask (_, {id}, {current_user}) {
+            const deleted_task = (await todoModel.deleteOne({$and: [{_id: id}, {user_id: current_user.id}]})).deletedCount;
 
-            return deleted_task;
+            if (deleted_task) {
+                return `Task successfully deleted`
+            }
+            return new ApolloError('Error deleting task this time', 417);
         },
 
         async registerUser(_, {userInput: {username, password, confirm_password, email}}) {
 
             if (!username || !password || !confirm_password || !email) {
-                console.log(username);
+                
                 return new ApolloError('All field must be field', 417);
             }
             

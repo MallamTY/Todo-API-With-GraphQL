@@ -56,8 +56,8 @@ type Query {
 
 type Mutation {
     createTask (taskInput: TaskInput!): Task!
-    updateTask (id: ID!, editeTaskInput: EditTaskInput!): Boolean
-    deleteTask (id: ID!): Boolean
+    updateTask (id: ID!, editeTaskInput: EditTaskInput!): String
+    deleteTask (id: ID!): String
     registerUser(userInput: regInput!): User!
     loginUser(loginInput: loginInput): LoginUser!
 
